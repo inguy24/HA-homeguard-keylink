@@ -1,0 +1,66 @@
+[
+    {
+        "id": "174c2011475d038d",
+        "type": "subflow",
+        "name": "Alarm Process Trigger",
+        "info": "",
+        "category": "",
+        "in": [
+            {
+                "x": 60,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "4ef7e336f8e2a6e8"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 380,
+                "y": 80,
+                "wires": [
+                    {
+                        "id": "4ef7e336f8e2a6e8",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [],
+        "meta": {},
+        "color": "#DDAA99"
+    },
+    {
+        "id": "4ef7e336f8e2a6e8",
+        "type": "function",
+        "z": "174c2011475d038d",
+        "name": "function 2",
+        "func": "function GetChangedGroupEntity(group, stateMatch){\n\n    var groupEntity = global.get(\"homeassistant.homeAssistant.states['\" + group + \"'].attributes.entity_id\");\n\n    for (let index = 0; index < groupEntity.length; index++) {\n        var entity = {};\n        entity.id = groupEntity[index];\n        entity.state = global.get(\"homeassistant.homeAssistant.states['\" + groupEntity[index] + \"'].state\");\n        entity.sensor = global.get(\"homeassistant.homeAssistant.states['\" + groupEntity[index] + \"'].attributes.friendly_name\");\n        entity.time = msg.data.new_state.last_changed;\n\n        if(entity.state == stateMatch){\n            return entity;\n        };\n\n    };\n};\n\nif(msg.sensor_type == 'INTRUDER'){\n    msg.entryExit = 'entry';\n    \n    if(msg.delay == true){\n        msg.delay = null;\n\n        switch(global.get(\"homeassistant.homeAssistant.states['sensor.alarm_armed_state'].state\")){\n            case ('armed_home') :\n                msg.trigger_group = 'home';\n                msg.delay = Number(global.get(\"homeassistant.homeAssistant.states['number.alarm_home_entry_delay'].state\"));\n                break;\n            case ('armed_night') :\n                msg.trigger_group = 'night';\n                msg.delay = Number(global.get(\"homeassistant.homeAssistant.states['number.alarm_night_entry_delay'].state\"));\n                break;\n            case ('armed_away') :\n                msg.trigger_group = 'away';\n                msg.delay = Number(global.get(\"homeassistant.homeAssistant.states['number.alarm_away_entry_delay'].state\"));\n                break;\n            case ('triggered') :\n                msg.delay = 0;\n                break;\n            case ('disarmed') :\n                msg.trigger_group = 'disarm';\n                return null;\n        };\n    } else {\n        msg.delay = null;\n        msg.delay = 0;\n    };\n};\nif(msg.sensor_type == 'FIRE'){\n    msg.delay = Number(global.get(\"homeassistant.homeAssistant.states['number.smoke_delay'].state\"));\n}\nif(msg.sensor_type == 'CARBON MONOXIDE'){\n    msg.delay = Number(global.get(\"homeassistant.homeAssistant.states['number.co_delay'].state\"));\n}\nmsg.trigger = GetChangedGroupEntity(msg.topic, 'on');\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 220,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4774196b53ba2845",
+        "type": "subflow:174c2011475d038d",
+        "z": "d2d431d61fb8d768",
+        "name": "",
+        "x": 740,
+        "y": 380,
+        "wires": [
+            [
+                "92cbca911f6e4a33"
+            ]
+        ]
+    }
+]
